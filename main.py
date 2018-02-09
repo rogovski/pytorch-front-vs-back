@@ -37,8 +37,8 @@ train_ds.initialize(args, phase='train')
 test_ds = CarvanaDataset()
 test_ds.initialize(args, phase='test')
 kwargs = {'num_workers': 1, 'pin_memory': True} if args.cuda else {}
-train_loader = DataLoader(train_ds, batch_size=args.batch_size, **kwargs)
-test_loader = DataLoader(test_ds, batch_size=args.batch_size, **kwargs)
+train_loader = DataLoader(train_ds, batch_size=args.batch_size, drop_last=True, **kwargs)
+test_loader = DataLoader(test_ds, batch_size=args.batch_size, drop_last=True, **kwargs)
 
 model = CarvanaFvbNet()
 if args.cuda:
@@ -87,3 +87,4 @@ def test():
 for epoch in range(1, args.epochs + 1):
     train(epoch)
     test()
+    torch.save(model.state_dict(), './checkpoints/latest_{}.pth'.format(epoch))
