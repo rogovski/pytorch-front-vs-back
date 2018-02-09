@@ -31,9 +31,10 @@ class CarvanaDataset(data.Dataset):
     def __init__(self):
         super(CarvanaDataset, self).__init__()
 
-    def initialize(self, opt):
-        self._dat = _create_dataset(opt.dataroot, dstype=opt.phase)
+    def initialize(self, opt, phase='train'):
+        self._dat = _create_dataset(opt.dataroot, dstype=phase)
         transform_list = [transforms.ToTensor(),
+                          # TODO: compute mean and std of dataset
                           transforms.Normalize((0.5, 0.5, 0.5),
                                                (0.5, 0.5, 0.5))]
         self.transform = transforms.Compose(transform_list)
