@@ -59,7 +59,10 @@ class CarvanaFvbNet(nn.Module):
         """
         output the activation map at a given layer
         """
-        pass
+        x = self.features[0](x)
+        for i in range(1, layer+1):
+            x = self.features[i](x)
+        return x
 
     def forward(self, x):
         x = self.features(x)

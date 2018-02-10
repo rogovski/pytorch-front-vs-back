@@ -8,11 +8,16 @@ import torch.nn.functional as F
 from torch.utils.data import DataLoader
 import torch.optim as optim
 from torch.autograd import Variable
+import torchvision.transforms as transforms
+from sklearn.preprocessing import MinMaxScaler
 from PIL import Image
+import numpy as np
 
 parser = argparse.ArgumentParser(description='Carvana Front vs Back - PyTorch')
 parser.add_argument('--dataroot', type=str,
                     help='location of dataset')
+parser.add_argument('--mode', type=str, default='full',
+                    help='full|incorrect|vis')
 parser.add_argument('--batch-size', type=int, default=64, metavar='N',
                     help='input batch size for training (default: 64)')
 parser.add_argument('--which-epoch', type=int, default=1, metavar='N',
@@ -29,6 +34,10 @@ parser.add_argument('--seed', type=int, default=1, metavar='S',
                     help='random seed (default: 1)')
 parser.add_argument('--log-interval', type=int, default=10, metavar='N',
                     help='how many batches to wait before logging training status')
+parser.add_argument('--vis-aimg', type=int, default=0,
+                    help='index of the image to visualize activations for')
+parser.add_argument('--vis-alayer', type=int, default=0,
+                    help='index of the layer to visualize (0-23)')
 args = parser.parse_args()
 args.cuda = not args.no_cuda and torch.cuda.is_available()
 
@@ -110,5 +119,36 @@ def collect_incorrect():
     print('\nValidation set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
         val_loss, correct, len(val_loader.dataset),
         100. * correct / len(val_loader.dataset)))
-# val()
-collect_incorrect()
+
+def vis_activations(image_idx, layer_idx):
+    import visdom
+    vis = visdom.Visdom()
+    model.eval()
+    transform_list = [transforms.ToTensor(),
+                      transforms.Normalize((0.5, 0.5, 0.5),
+                                           (0.5, 0.5, 0.5))]
+    transform = transforms.Compose(transform_list)
+    lbl, path = val_ds._dat[image_idx]
+    x_img = Image.open(path).convert('RGB')
+    x = transform(x_img)
+    vis.image(x)
+    x = x.unsqueeze(0).cuda()
+    x = Variable(x, volatile=True)
+    output = model.forward_features(x, layer_idx).squeeze(0)
+    output = output.data.cpu()
+    # Image.fromarray(np.uint8(output*255))
+    for ch in range(output.size(0)):
+        res = output[ch].squeeze(0)
+        vis.image(res)
+
+
+
+
+    return output
+
+if args.mode == 'full':
+    val()
+elif args.mode == 'incorrect':
+    collect_incorrect()
+elif args.mode == 'vis':
+    vis_activations(args.vis_aimg, args.vis_alayer)
