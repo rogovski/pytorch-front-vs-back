@@ -33,13 +33,13 @@ class CarvanaFvbNet(nn.Module):
             nn.Conv2d(512, 512, 3, padding=1),
             nn.ReLU(inplace=True),
             nn.Conv2d(512, 512, 3, padding=1),
+            nn.Dropout2d(),
             nn.ReLU(inplace=True),
             nn.MaxPool2d(2, stride=2)
         )
         self.classifier = nn.Sequential(
             nn.Linear(512*10*15, 4096),
             nn.ReLU(inplace=True),
-            nn.Dropout(),
             nn.Linear(4096, 4)
         )
         self._initialize_weights()
