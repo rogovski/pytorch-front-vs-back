@@ -40,13 +40,16 @@ kwargs = {'num_workers': 1, 'pin_memory': True} if args.cuda else {}
 val_loader = DataLoader(val_ds, batch_size=args.batch_size, drop_last=True, **kwargs)
 
 model = CarvanaFvbNet()
+print(model)
+print('\nloading model params')
 model.load_state_dict(torch.load('./checkpoints/latest_{}.pth'.format(args.which_epoch)))
 if args.cuda:
     model.cuda()
+print('\nload complete!')
 
 def val():
     model.eval()
-    print(model)
+    print('\nbegin val')
     val_loss = 0
     correct = 0
     for data, target, dsidx in val_loader:
@@ -71,7 +74,7 @@ def collect_incorrect():
     batch size should be 1 for this proc to work correctly
     """
     model.eval()
-    print(model)
+    print('\nbegin logging incorrect predictions')
     val_loss = 0
     correct = 0
     incorrect_idx = []
