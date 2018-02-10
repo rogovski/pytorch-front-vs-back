@@ -55,6 +55,12 @@ class CarvanaFvbNet(nn.Module):
                 m.weight.data.normal_(0, 0.01)
                 m.bias.data.zero_()
 
+    def forward_features(self, x, layer):
+        """
+        output the activation map at a given layer
+        """
+        pass
+
     def forward(self, x):
         x = self.features(x)
         x = x.view(x.size(0), -1)
