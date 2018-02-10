@@ -66,4 +66,40 @@ def val():
         val_loss, correct, len(val_loader.dataset),
         100. * correct / len(val_loader.dataset)))
 
-val()
+def collect_incorrect():
+    """
+    batch size should be 1 for this proc to work correctly
+    """
+    model.eval()
+    print(model)
+    val_loss = 0
+    correct = 0
+    incorrect_idx = []
+    for data, target, dsidx in val_loader:
+        if args.cuda:
+            data, target = data.cuda(), target.cuda()
+        target = target.squeeze(1)
+        data, target = Variable(data, volatile=True), Variable(target)
+        output = model(data)
+        # sum up batch loss
+        val_loss += F.nll_loss(output, target, size_average=False).data[0]
+        # get the index of the max log-probability
+        pred = output.data.max(1, keepdim=True)[1]
+        is_pred_correct = pred.eq(target.data.view_as(pred)).cpu()
+        correct += is_pred_correct.sum()
+        is_pred_correct_raw = is_pred_correct.numpy().tolist()[0][0]
+        if is_pred_correct_raw == 0:
+            mis_idx = dsidx.numpy().tolist()[0][0]
+            iter_pred = pred.cpu().numpy().tolist()[0][0]
+            iter_target = target.data.cpu().numpy().tolist()[0]
+            print('found misclassification at val set idx: {}'.format(mis_idx))
+            print('    |-- pred {}'.format(iter_pred))
+            print('    |-- targ {}'.format(iter_target))
+            print('    |-- {}'.format(val_ds._dat[mis_idx][1]))
+
+    val_loss /= len(val_loader.dataset)
+    print('\nValidation set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
+        val_loss, correct, len(val_loader.dataset),
+        100. * correct / len(val_loader.dataset)))
+# val()
+collect_incorrect()
