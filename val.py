@@ -1,4 +1,5 @@
 from __future__ import print_function
+import os
 import argparse
 from dataset import CarvanaDataset
 from net import CarvanaFvbNet
@@ -7,6 +8,7 @@ import torch.nn.functional as F
 from torch.utils.data import DataLoader
 import torch.optim as optim
 from torch.autograd import Variable
+from PIL import Image
 
 parser = argparse.ArgumentParser(description='Carvana Front vs Back - PyTorch')
 parser.add_argument('--dataroot', type=str,
@@ -35,7 +37,7 @@ if args.cuda:
     torch.cuda.manual_seed(args.seed)
 
 val_ds = CarvanaDataset()
-val_ds.initialize(args, phase='test')
+val_ds.initialize(args, phase='val')
 kwargs = {'num_workers': 1, 'pin_memory': True} if args.cuda else {}
 val_loader = DataLoader(val_ds, batch_size=args.batch_size, drop_last=True, **kwargs)
 
@@ -95,10 +97,14 @@ def collect_incorrect():
             mis_idx = dsidx.numpy().tolist()[0][0]
             iter_pred = pred.cpu().numpy().tolist()[0][0]
             iter_target = target.data.cpu().numpy().tolist()[0]
+            img_path = val_ds._dat[mis_idx][1]
             print('found misclassification at val set idx: {}'.format(mis_idx))
-            print('    |-- pred {}'.format(iter_pred))
-            print('    |-- targ {}'.format(iter_target))
-            print('    |-- {}'.format(val_ds._dat[mis_idx][1]))
+            print('    |-- pred {}'.format(val_ds._idx2label[iter_pred]))
+            print('    |-- targ {}'.format(val_ds._idx2label[iter_target]))
+            print('    |-- {}'.format(img_path))
+            inc_img = Image.open(img_path)
+            inc_img_name = os.path.basename(img_path)
+            inc_img.save(os.path.join('./results/val/incorrect/images', inc_img_name))
 
     val_loss /= len(val_loader.dataset)
     print('\nValidation set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
