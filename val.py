@@ -49,7 +49,7 @@ def val():
     print(model)
     val_loss = 0
     correct = 0
-    for data, target in val_loader:
+    for data, target, dsidx in val_loader:
         if args.cuda:
             data, target = data.cuda(), target.cuda()
         target = target.squeeze(1)
@@ -60,6 +60,8 @@ def val():
         # get the index of the max log-probability
         pred = output.data.max(1, keepdim=True)[1]
         correct += pred.eq(target.data.view_as(pred)).cpu().sum()
+        print(dsidx)
+        break
 
     val_loss /= len(val_loader.dataset)
     print('\nValidation set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(

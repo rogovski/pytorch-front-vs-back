@@ -49,7 +49,7 @@ def test():
     print(model)
     test_loss = 0
     correct = 0
-    for data, target in test_loader:
+    for data, target, dsidx in test_loader:
         if args.cuda:
             data, target = data.cuda(), target.cuda()
         target = target.squeeze(1)

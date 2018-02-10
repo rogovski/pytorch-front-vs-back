@@ -6,7 +6,7 @@ from PIL import Image
 import torchvision.transforms as transforms
 USER_PATH = os.path.expanduser('~')
 
-def _create_dataset(dataroot, dstype='train', shuffle=True):
+def _create_dataset(dataroot, dstype='train'):
     switch_name = { 'train': 'train-color', 'test': 'test-color', 'val': 'validate-color' }
     base_in_name = switch_name[dstype]
     base_in_by_class = [
@@ -23,8 +23,6 @@ def _create_dataset(dataroot, dstype='train', shuffle=True):
                 continue
             full_path = os.path.join(base_in, f)
             labeled_img_paths.append((i, full_path))
-    if shuffle:
-        np.random.shuffle(labeled_img_paths)
     return labeled_img_paths
 
 class CarvanaDataset(data.Dataset):
@@ -43,7 +41,7 @@ class CarvanaDataset(data.Dataset):
         target, path = self._dat[index]
         X = Image.open(path).convert('RGB')
         X = self.transform(X)
-        return X, torch.LongTensor([target])
+        return X, torch.LongTensor([target]), torch.LongTensor([index])
 
     def __len__(self):
         return len(self._dat)

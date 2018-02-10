@@ -37,7 +37,7 @@ train_ds.initialize(args, phase='train')
 test_ds = CarvanaDataset()
 test_ds.initialize(args, phase='test')
 kwargs = {'num_workers': 1, 'pin_memory': True} if args.cuda else {}
-train_loader = DataLoader(train_ds, batch_size=args.batch_size, drop_last=True, **kwargs)
+train_loader = DataLoader(train_ds, batch_size=args.batch_size, drop_last=True, shuffle=True, **kwargs)
 test_loader = DataLoader(test_ds, batch_size=args.batch_size, drop_last=True, **kwargs)
 
 model = CarvanaFvbNet()
@@ -48,7 +48,7 @@ optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum)
 
 def train(epoch):
     model.train()
-    for batch_idx, (data, target) in enumerate(train_loader):
+    for batch_idx, (data, target, dsidx) in enumerate(train_loader):
         if args.cuda:
             data, target = data.cuda(), target.cuda()
         target = target.squeeze(1)
@@ -67,7 +67,7 @@ def test():
     model.eval()
     test_loss = 0
     correct = 0
-    for data, target in test_loader:
+    for data, target, dsidx in test_loader:
         if args.cuda:
             data, target = data.cuda(), target.cuda()
         target = target.squeeze(1)
