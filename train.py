@@ -87,4 +87,5 @@ def test():
 for epoch in range(1, args.epochs + 1):
     train(epoch)
     test()
-    torch.save(model.state_dict(), './checkpoints/latest_{}.pth'.format(epoch))
+    torch.save(model.cpu().state_dict(), './checkpoints/latest_{}.pth'.format(epoch))
+    model.cuda(0)
