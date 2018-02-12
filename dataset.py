@@ -32,10 +32,7 @@ class CarvanaDataset(data.Dataset):
     def initialize(self, opt, phase='train'):
         self._dat = _create_dataset(opt.dataroot, dstype=phase)
         self._idx2label = ['front', 'driverside', 'back', 'passengerside']
-        transform_list = [transforms.ToTensor(),
-                          # TODO: compute mean and std of dataset
-                          transforms.Normalize((0.5, 0.5, 0.5),
-                                               (0.5, 0.5, 0.5))]
+        transform_list = [transforms.ToTensor()]
         self.transform = transforms.Compose(transform_list)
 
     def __getitem__(self, index):
