@@ -125,6 +125,14 @@ def collect_incorrect():
         val_loss, correct, len(val_loader.dataset),
         100. * correct / len(val_loader.dataset)))
 
+def activation_resize():
+    transform_list = [
+        transforms.ToPILImage(),
+        transforms.Resize((160,240)),
+        transforms.ToTensor()
+    ]
+    return transforms.Compose(transform_list)
+
 def vis_activations(image_idx, layer_idx):
     import visdom
     vis = visdom.Visdom()
@@ -135,17 +143,17 @@ def vis_activations(image_idx, layer_idx):
     x_img = Image.open(path).convert('RGB')
     x = transform(x_img)
     vis.image(x)
-    x = x.unsqueeze(0).cuda()
+    x = x.unsqueeze(0)
+    if args.cuda:
+        x = x.cpu()
     x = Variable(x, volatile=True)
     output = model.forward_features(x, layer_idx).squeeze(0)
     output = output.data.cpu()
+    resize_fn = activation_resize()
     for ch in range(output.size(0)):
-        res = output[ch].squeeze(0)
+        res = output[ch].unsqueeze(0)
+        res = resize_fn(res)
         vis.image(res)
-
-
-
-
     return output
 
 if args.mode == 'full':
