@@ -81,6 +81,8 @@ def val():
         100. * correct / len(val_loader.dataset)))
 
 def collect_incorrect():
+    import visdom
+    vis = visdom.Visdom()
     """
     batch size should be 1 for this proc to work correctly
     """
@@ -103,17 +105,20 @@ def collect_incorrect():
         correct += is_pred_correct.sum()
         is_pred_correct_raw = is_pred_correct.numpy().tolist()[0][0]
         if is_pred_correct_raw == 0:
+            img_in = data.squeeze(0)
+            if args.cuda:
+                img_in = img_in.cpu()
+            img_in = img_in.data
             mis_idx = dsidx.numpy().tolist()[0][0]
             iter_pred = pred.cpu().numpy().tolist()[0][0]
             iter_target = target.data.cpu().numpy().tolist()[0]
             img_path = val_ds._dat[mis_idx][1]
-            print('found misclassification at val set idx: {}'.format(mis_idx))
-            print('    |-- pred {}'.format(val_ds._idx2label[iter_pred]))
-            print('    |-- targ {}'.format(val_ds._idx2label[iter_target]))
-            print('    |-- {}'.format(img_path))
-            inc_img = Image.open(img_path)
-            inc_img_name = os.path.basename(img_path)
-            inc_img.save(os.path.join('./results/val/incorrect/images', inc_img_name))
+
+            caption = 'pred: {}. target: {}. path: {}.'.format(
+                    val_ds._idx2label[iter_pred], val_ds._idx2label[iter_target], img_path)
+            vis.image(img_in, opts={ 
+                'caption': caption 
+            })
 
     val_loss /= len(val_loader.dataset)
     print('\nValidation set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
@@ -124,9 +129,7 @@ def vis_activations(image_idx, layer_idx):
     import visdom
     vis = visdom.Visdom()
     model.eval()
-    transform_list = [transforms.ToTensor(),
-                      transforms.Normalize((0.5, 0.5, 0.5),
-                                           (0.5, 0.5, 0.5))]
+    transform_list = [transforms.ToTensor()]
     transform = transforms.Compose(transform_list)
     lbl, path = val_ds._dat[image_idx]
     x_img = Image.open(path).convert('RGB')
@@ -136,7 +139,6 @@ def vis_activations(image_idx, layer_idx):
     x = Variable(x, volatile=True)
     output = model.forward_features(x, layer_idx).squeeze(0)
     output = output.data.cpu()
-    # Image.fromarray(np.uint8(output*255))
     for ch in range(output.size(0)):
         res = output[ch].squeeze(0)
         vis.image(res)
